@@ -1,5 +1,6 @@
 @setlocal enableextensions enabledelayedexpansion
 @echo off
+@echo %0 %1 %2 %3
 @echo "Setting up dependent files."
 rem *********************************************************************************
 rem This batch file copies dependency files into the proper folder based on         *
@@ -9,31 +10,57 @@ rem mode.                                                                       
 rem If the argument is "Release" (without ") then it will copy dependent files      *
 rem into the build\Release folder under the build folder.                           *
 rem *********************************************************************************
+set "str=%1"
+call :toupper
 pushd ..
 for /f %%i in ('cd') do set SRCFOLDER=%%i
 popd
 @echo Setting up %SRCFOLDER% for %1 execution.
-if "%1"=="" goto usage
-if not exist %SRCFOLDER%\build\%1 goto usage
-set "str=%1"
-call :toupper
+if "%1"=="" goto :usage
+
 set "mode=%upper%"
-if "%mode%"=="RELEASE" goto setup
-if "%mode%"=="RELWITHDEBINFO" goto setup
-if "%mode%"=="MINSIZEREL" goto setup
-if "%mode%"=="DEBUG" goto setup
-goto usage
+if "%mode%"=="RELEASE" goto :setup
+if "%mode%"=="RELWITHDEBINFO" goto :setup
+if "%mode%"=="MINSIZEREL" goto :setup
+if "%mode%"=="DEBUG" goto :setup
+if "%mode%"=="CLEAN" goto :setup
+goto :usage
 
 :setup
-echo "Setting up source and destination folders"
-set rdir1=%SRCFOLDER%\build\%mode%
-set pld1=%SRCFOLDER%\build\%mode%\plugins
-if "%2" == "PluginsOnly" goto copy_plugins
+@echo "Setting up source and destination folders"
+if not exist %SRCFOLDER%\build goto :usage
+if not "%mode%"=="CLEAN" goto :plugins
 
+set mode=RELEASE
+call :clean 
+set mode=DEBUG
+call :clean 
+exit /b 0
+
+:clean
+set rdir1=%SRCFOLDER%\build\%mode%
+
+
+@echo "Cleaning up old data files."
+if exist %rdir1%\configs\NUL rmdir /S /Q %rdir1%\configs
+if exist %rdir1%\doc\NUL rmdir /S /Q %rdir1%\doc
+if exist %rdir1%\gshhs\NUL rmdir /S /Q %rdir1%\gshhs
+if exist %rdir1%\s57data\NUL rmdir /S /Q %rdir1%\s57data
+if exist %rdir1%\raster_texture_cache\NUL rmdir /S /Q %rdir1%\raster_texture_cache
+if exist %rdir1%\share\NUL rmdir /S /Q %rdir1%\share
+if exist %rdir1%\sounds\NUL rmdir /S /Q %rdir1%\sounds
+if exist %rdir1%\tcdata\NUL rmdir /S /Q %rdir1%\tcdata
+if exist %rdir1%\uidata\NUL rmdir /S /Q %rdir1%\uidata
+if exist %rdir1%\wvsdata\NUL rmdir /S /Q %rdir1%\wvsdata
+if exist %rdir1%\bitmaps\NUL rmdir /S /Q %rdir1%\bitmaps
+if exist %rdir1%\opencpn.exe del /Q %rdir1%\opencpn.exe
+@echo "Finished cleaning up old data files."
+
+:docopy
 @echo Copying DLLs...
 rem del /f %rdir1%\*.dll
 copy /Y /V %SRCFOLDER%\buildwin\gtk\*.dll %rdir1%
-copy /Y /V %SRCFOLDER%\buildwin\expat-2.1.0\*.dll %rdir1%
+copy /Y /V %SRCFOLDER%\buildwin\expat-2.2.5\*.dll %rdir1%
 copy /Y /V %SRCFOLDER%\buildwin\*.dll %rdir1%
 copy /Y /V %SRCFOLDER%\buildwin\*.crt %rdir1%
 if exist %SRCFOLDER%\buildwin\vc copy /Y /V %SRCFOLDER%\buildwin\vc\*.dll %rdir1%
@@ -49,57 +76,54 @@ rem if "%mode%" == "MINSIZEREL" xcopy /Y /Q /H /E /K /I %WXDIR%\lib\vc141_dll\*u
 
 
 @echo "Copying data files"
-if not exist %rdir1%\doc echo "running mkdir %rdir1%\doc"
-if not exist %rdir1%\doc mkdir %rdir1%\doc
-if not exist %rdir1%\gshhs echo "running mkdir %rdir1%\gshhs"
-if not exist %rdir1%\gshhs mkdir %rdir1%\gshhs
-if not exist %rdir1%\plugins echo "running mkdir %rdir1%\plugins"
-if not exist %rdir1%\plugins mkdir %rdir1%\plugins
-if not exist %rdir1%\s57data mkdir %rdir1%\s57data
-if not exist %rdir1%\share mkdir %rdir1%\share
-if not exist %rdir1%\sounds mkdir %rdir1%\sounds
-if not exist %rdir1%\tcdata mkdir %rdir1%\tcdata
-if not exist %rdir1%\uidata mkdir %rdir1%\uidata
-if not exist %rdir1%\uidata\traditional mkdir %rdir1%\uidata\traditional
-if not exist %rdir1%\uidata\journeyman mkdir %rdir1%\uidata\journeyman
-if not exist %rdir1%\uidata\journeyman_flat mkdir %rdir1%\uidata\journeyman_flat
-if not exist %rdir1%\uidata\MUI_flat mkdir %rdir1%\uidata\MUI_flat
+if not exist %rdir1%\doc\NUL echo "running mkdir %rdir1%\doc"
+if not exist %rdir1%\doc\NUL mkdir %rdir1%\doc
+if not exist %rdir1%\gshhs\NUL echo "running mkdir %rdir1%\gshhs"
+if not exist %rdir1%\gshhs\NUL mkdir %rdir1%\gshhs
+if not exist %rdir1%\plugins\NUL echo "running mkdir %rdir1%\plugins"
+if not exist %rdir1%\plugins\NUL mkdir %rdir1%\plugins
+if not exist %rdir1%\s57data\NUL mkdir %rdir1%\s57data
+if not exist %rdir1%\share\NUL mkdir %rdir1%\share
+if not exist %rdir1%\sounds\NUL mkdir %rdir1%\sounds
+if not exist %rdir1%\tcdata\NUL mkdir %rdir1%\tcdata
+if not exist %rdir1%\uidata\NUL mkdir %rdir1%\uidata
+if not exist %rdir1%\configs\NUL mkdir %rdir1%\configs
+if not exist %rdir1%\CrashReports\NUL mkdir %rdir1%\CrashReports
+if not exist %rdir1%\SENC\NUL mkdir %rdir1%\SENC
+if not exist %rdir1%\uidata\traditional\NUL mkdir %rdir1%\uidata\traditional
+if not exist %rdir1%\uidata\journeyman\NUL mkdir %rdir1%\uidata\journeyman
+if not exist %rdir1%\uidata\journeyman_flat\NUL mkdir %rdir1%\uidata\journeyman_flat
+if exist %SRCFOLDER%\data\svg\MUI_flat\NUL mkdir %rdir1%\uidata\MUI_flat
 
-if not exist %rdir1%\wvsdata mkdir %rdir1%\wvsdata
+if not exist %rdir1%\wvsdata\NUL mkdir %rdir1%\wvsdata
 
 :copy_uidata
+
 @echo Copying icons and syles
 copy /Y /V %SRCFOLDER%\src\bitmaps\styles.xml %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\toolicons_traditional.png %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\toolicons_journeyman.png %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\toolicons_journeyman_flat.png %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\iconAll.png %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\iconMinimum.png %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\iconRMinus.png %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\iconRPlus.png %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\iconStandard.png %rdir1%\uidata
-copy /Y /V %SRCFOLDER%\src\bitmaps\iconUserStd.png %rdir1%\uidata
+copy /Y /V %SRCFOLDER%\src\bitmaps\*.png %rdir1%\uidata
+copy /Y /V %SRCFOLDER%\src\bitmaps\*.svg %rdir1%\uidata
 @echo Copying toolbar icons
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\svg\journeyman %rdir1%\uidata\journeyman
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\svg\journeyman_flat %rdir1%\uidata\journeyman_flat
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\svg\traditional %rdir1%\uidata\traditional
-xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\svg\MUI_flat %rdir1%\uidata\MUI_flat
+if exist %rdir1%\uidata\MUI_flat\NUL xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\svg\MUI_flat %rdir1%\uidata\MUI_flat
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\svg\markicons %rdir1%\uidata\markicons
 @echo Copying documentation and misc. data
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\doc %rdir1%\doc
+xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\configs %rdir1%\configs
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\gshhs %rdir1%\gshhs
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\s57data %rdir1%\s57data
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\sounds %rdir1%\sounds
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\tcdata %rdir1%\tcdata
 xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\wvsdata %rdir1%\wvsdata
-xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data\license.txt %rdir1%
-
+xcopy /Y /Q /H /E /K /I  %SRCFOLDER%\data %rdir1%
 for /d %%a in (
   "%SRCFOLDER%\build\_CPack_Packages\win32\NSIS\opencpn_*_setup"
 ) do set "ShareFolder=%%~fa\share"
 
-if "%ShareFolder%" == "" goto copy_crashrpt
-if not exist "%ShareFolder%" goto copy_crashrpt
+if "%ShareFolder%" == "" goto :copy_crashrpt
+if not exist "%ShareFolder%" goto :copy_crashrpt
 xcopy /Y /Q /H /E /K /I %ShareFolder% %rdir1%\share
 
 :copy_crashrpt
@@ -118,10 +142,13 @@ rem copy /v %PROGRAMDATA%\OpenCPN\opencpn.ini %rdir1%\opencpn.ini
 rem copy /v %PROGRAMDATA%\OpenCPN\navobj.xml %rdir1%\navobj.xml
 rem copy /v %PROGRAMDATA%\OpenCPN\navobj.xml.1 %rdir1%\navobj.xml.1
 rem copy /v %PROGRAMDATA%\OpenCPN\CHRTLIST.DAT %rdir1%\CHRTLIST.DAT
+exit /b /0
 
-:copy_plugins
+:plugins
+if not exist %SRCFOLDER%\build\%mode% call :clean
+set pld1=%SRCFOLDER%\build\%mode%\plugins
 for /D %%f in (%SRCFOLDER%\plugins\*) do call :handlePluginDir %1 %%f %pld1%
-
+:finish
 exit /b 0
 :usage
 endlocal
@@ -162,11 +189,13 @@ rem @echo arg0=%0
 rem @echo arg1=%1
 rem @echo arg2=%2
 rem @echo arg3=%3
-if not exist %SRCFOLDER%\build\plugins\%1\%2\%1.dll goto endCopyPlugin
+if not exist "%SRCFOLDER%\build\plugins\%1\%2\%1.dll" goto :endCopyPlugin
 if not exist %3 mkdir %3
 @echo "Copying %SRCFOLDER%\build\plugins\%1\%2\%1.dll--->%3"
 copy /Y /V %SRCFOLDER%\build\plugins\%1\%2\%1.dll %3
-if not exist %SRCFOLDER%\plugins\%1\data goto endCopyPlugin
+@echo "Copying %SRCFOLDER%\build\plugins\%1\%2\%1.pdb--->%3"
+copy /Y /V %SRCFOLDER%\build\plugins\%1\%2\%1.pdb %3
+if not exist %SRCFOLDER%\plugins\%1\data goto :endCopyPlugin
 if not exist "%3\%1\data" mkdir "%3\%1\data"
 @echo "Xcopying %SRCFOLDER%\plugins\%1\data-->%3\%1\data"
 xcopy /Y /Q /H /E /K /I %SRCFOLDER%\plugins\%1\data %3\%1\data
@@ -177,3 +206,4 @@ exit /b 0
 @rem convert str to uppercase and put it in variable upper
 for /f "usebackq delims=" %%I in (`powershell "\"%str%\".toUpper()"`) do set "upper=%%~I"
 exit /b 0
+

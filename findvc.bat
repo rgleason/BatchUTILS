@@ -1,15 +1,17 @@
 @echo off
 @echo Trying to find Visual Studio version
-
+echo "%VSINSTALLDIR%"
 set __ts__=
 set __gen__=
 
-if "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio 12.0\" call :VS2013
-if "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\" call :VS2015
-if "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\" call :VS2017
-if "%VCINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio\Preview\Community\VC\" call :VS2017
-
-if "__gen__"=="" goto noVC
+if /I "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio 12.0\" call :VS2013
+if /I "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio 14.0\" call :VS2015
+if /I "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\" call :VS2017
+if /I "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\" call :VS2017
+if /I "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\" call :VS2019
+if /I "%VSINSTALLDIR%" == "%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Preview\" call :VS2019
+echo "__get__ = %__get__%"
+if "%__gen__%" == "" call :noVC
 
 set vcgen=%__gen__%
 set vcts=%__ts__%
@@ -40,4 +42,10 @@ exit /b 0
 echo Configuring for VS2017
 set "__gen__=Visual Studio 15 2017"
 set "__ts__=141_xp"
+exit /b 0
+
+:VS2019
+echo Configuring for VS2019
+set "__gen__=Visual Studio 16 2019"
+set "__ts__=142"
 exit /b 0
